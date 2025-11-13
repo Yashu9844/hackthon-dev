@@ -157,7 +157,7 @@ export default function DocumentDetailPage() {
                 <Button variant="ghost" onClick={() => router.push("/wallet")}>
                   Wallet
                 </Button>
-                <Button variant="ghost" onClick={() => router.push("/verify")}>
+                <Button variant="ghost" onClick={() => router.push("/user-verify")}>
                   Verify
                 </Button>
               </div>

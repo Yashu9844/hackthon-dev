@@ -160,7 +160,7 @@ export default function WalletPage() {
                   Dashboard
                 </Button>
                 <Button variant="ghost">Wallet</Button>
-                <Button variant="ghost" onClick={() => router.push("/verify")}>
+                <Button variant="ghost" onClick={() => router.push("/user-verify")}>
                   Verify
                 </Button>
               </div>

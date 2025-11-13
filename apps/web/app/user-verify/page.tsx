@@ -234,7 +234,7 @@ export default function VerifyPage() {
                         onChange={(e) => setInputValue(e.target.value)}
                         placeholder={
                           verificationMethod === "link"
-                            ? "https://pixelgenesis.app/verify/..."
+                            ? "https://pixelgenesis.app/user-verify/..."
                             : "QmX7K8F3b9sT2pQ1yH5vN6wR4mJ8eD3cA..."
                         }
                         className="mt-2"

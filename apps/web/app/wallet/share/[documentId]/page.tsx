@@ -168,7 +168,7 @@ export default function ShareDocumentPage() {
       .map(([field, _]) => field);
     
     const encodedFields = btoa(JSON.stringify(selectedFieldsList));
-    const link = `${window.location.origin}/verify/${document.id}?fields=${encodedFields}&expires=${expiryTime}`;
+    const link = `${window.location.origin}/user-verify/${document.id}?fields=${encodedFields}&expires=${expiryTime}`;
     setShareLink(link);
     setShowQR(true);
   };
@@ -196,7 +196,7 @@ export default function ShareDocumentPage() {
                 <Button variant="ghost" onClick={() => router.push("/wallet")}>
                   Wallet
                 </Button>
-                <Button variant="ghost" onClick={() => router.push("/verify")}>
+                <Button variant="ghost" onClick={() => router.push("/user-verify")}>
                   Verify
                 </Button>
               </div>
