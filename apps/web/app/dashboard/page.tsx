@@ -109,12 +109,81 @@ export default function DashboardPage() {
   const { ready, authenticated, user, logout } = usePrivy();
   const router = useRouter();
   const [copied, setCopied] = useState(false);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [activities, setActivities] = useState<any[]>([]);
+  const [dashboardStats, setDashboardStats] = useState<any>({
+    totalDocuments: 0,
+    totalViews: 0,
+    activeShares: 0,
+    blockchainTransactions: 0,
+  });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (ready && !authenticated) {
       router.push("/login");
     }
   }, [ready, authenticated, router]);
+
+  // Fetch documents and activities from API
+  useEffect(() => {
+    if (ready && authenticated) {
+      fetchDocuments();
+      fetchActivities();
+    }
+  }, [ready, authenticated]);
+
+  const fetchDocuments = async () => {
+    try {
+      const token = localStorage.getItem('privy:token');
+      const headers: HeadersInit = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch('/api/documents', {
+        headers,
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setDocuments(result.documents);
+      } else {
+        console.error('Failed to fetch documents:', result.error);
+      }
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+    }
+  };
+
+  const fetchActivities = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('privy:token');
+      const headers: HeadersInit = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch('/api/activities', {
+        headers,
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setActivities(result.activities);
+        setDashboardStats(result.stats);
+      } else {
+        console.error('Failed to fetch activities:', result.error);
+      }
+    } catch (error) {
+      console.error('Error fetching activities:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const copyDID = () => {
     if (user?.id) {
@@ -133,10 +202,9 @@ export default function DashboardPage() {
   }
 
   const stats = {
-    totalDocuments: dummyDocuments.length,
-    verifiedCredentials: dummyDocuments.filter((d) => d.status === "verified").length,
-    activeShares: 5,
-    totalViews: 47,
+    totalDocuments: dashboardStats.totalDocuments,
+    activeShares: dashboardStats.activeShares,
+    totalViews: dashboardStats.totalViews,
   };
 
   return (
@@ -206,18 +274,12 @@ export default function DashboardPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <StatsCard
             title="Total Documents"
             value={stats.totalDocuments}
             icon={FileText}
             description="In your vault"
-          />
-          <StatsCard
-            title="Verified Credentials"
-            value={stats.verifiedCredentials}
-            icon={CheckCircle}
-            description="Blockchain verified"
           />
           <StatsCard
             title="Active Shares"
@@ -240,12 +302,25 @@ export default function DashboardPage() {
 
         {/* Recent Documents */}
         <div className="mb-8">
-          <RecentDocuments documents={dummyDocuments} />
+          {loading ? (
+            <p className="text-muted-foreground">Loading documents...</p>
+          ) : (
+            <RecentDocuments documents={documents} />
+          )}
         </div>
 
-        {/* Activity Feed */}
+        {/* Ethereum Blockchain Transactions */}
         <div className="mb-8">
-          <ActivityFeed activities={dummyActivities} />
+          {loading ? (
+            <p className="text-muted-foreground">Loading transactions...</p>
+          ) : (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold">⛓️ Ethereum Blockchain Transactions</h2>
+              </div>
+              <ActivityFeed activities={activities} />
+            </div>
+          )}
         </div>
       </main>
     </div>

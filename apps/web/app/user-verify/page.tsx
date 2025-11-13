@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import jsQR from "jsqr";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,7 @@ export default function VerifyPage() {
   const [verificationMethod, setVerificationMethod] = useState<VerificationMethod>("link");
   const [inputValue, setInputValue] = useState("");
   const [verifying, setVerifying] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>("");
   const [verificationResult, setVerificationResult] = useState<{
     status: "valid" | "invalid" | "revoked" | null;
     document?: {
@@ -47,25 +49,127 @@ export default function VerifyPage() {
 
     setVerifying(true);
     setVerificationResult({ status: null });
+    setErrorMessage("");
 
-    // Simulate verification (will be replaced with actual blockchain verification)
-    setTimeout(() => {
-      // Mock verification result - in real app, this would call backend API
-      const mockResult = {
-        status: "valid" as const,
-        document: {
-          name: "Bachelor of Technology Degree",
-          type: "Academic Credential",
-          issuer: "MIT University",
-          issueDate: "2023-05-15",
-          holder: "did:privy:cmhxbybma00v2l50dthbhc152",
-          ipfsCid: "QmX7K8F3b9sT2pQ1yH5vN6wR4mJ8eD3cA9gL2xW5uV7nB4",
-        },
-      };
+    try {
+      let vcData: any = null;
 
-      setVerificationResult(mockResult);
+      if (verificationMethod === "link") {
+        // Extract token from share link
+        try {
+          const url = new URL(inputValue);
+          const token = url.pathname.split('/').pop();
+          if (token) {
+            // Redirect to token verify page
+            window.location.href = `/verify/${token}`;
+            return;
+          }
+        } catch (urlError) {
+          throw new Error('Invalid share link URL');
+        }
+      } else if (verificationMethod === "qr") {
+        // QR code scanning - decode the uploaded image
+        if (!inputValue || !inputValue.startsWith('QR_CODE_')) {
+          throw new Error('Please upload a QR code image');
+        }
+        // The actual QR decoding happens in the file upload handler
+        // If we reach here, inputValue should contain the decoded URL
+        throw new Error('QR code decoding failed. Please try again or paste the link manually.');
+      } else if (verificationMethod === "cid") {
+        // Fetch VC directly from IPFS
+        const response = await fetch(`https://gateway.pinata.cloud/ipfs/${inputValue}`);
+        if (response.ok) {
+          vcData = await response.json();
+        } else {
+          throw new Error('Failed to fetch credential from IPFS');
+        }
+      }
+
+      if (vcData) {
+        // Validate VC structure
+        if (vcData.type && vcData.type.includes('VerifiableCredential')) {
+          setVerificationResult({
+            status: "valid" as const,
+            document: {
+              name: vcData.credentialSubject?.studentName || vcData.credentialSubject?.documentName || 'Unknown',
+              type: vcData.credentialSubject?.degree || vcData.credentialSubject?.documentType || 'Unknown',
+              issuer: vcData.issuer?.name || vcData.issuer?.id || 'Unknown',
+              issueDate: vcData.issuanceDate || 'Unknown',
+              holder: vcData.credentialSubject?.id || 'Unknown',
+              ipfsCid: inputValue,
+            },
+          });
+        } else {
+          setVerificationResult({
+            status: "invalid" as const,
+          });
+        }
+      }
+    } catch (error: any) {
+      console.error('Verification error:', error);
+      setErrorMessage(error.message || 'Verification failed');
+      setVerificationResult({
+        status: "invalid" as const,
+      });
+    } finally {
       setVerifying(false);
-    }, 2000);
+    }
+  };
+
+  const resetError = () => {
+    setErrorMessage("");
+    setVerificationResult({ status: null });
+  };
+
+  const handleQRUpload = async (file: File) => {
+    try {
+      // Read the image file
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          // Create canvas to extract image data
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            setErrorMessage('Failed to process image');
+            return;
+          }
+
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+
+          // Get image data
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          
+          // Decode QR code
+          const code = jsQR(imageData.data, imageData.width, imageData.height);
+          
+          if (code && code.data) {
+            // Successfully decoded QR code
+            setInputValue(code.data);
+            
+            // Auto-submit if it's a share link
+            if (code.data.includes('/verify/')) {
+              const url = new URL(code.data);
+              const token = url.pathname.split('/').pop();
+              if (token) {
+                window.location.href = `/verify/${token}`;
+              }
+            } else {
+              setErrorMessage('QR code decoded, but content is not a valid share link');
+            }
+          } else {
+            setErrorMessage('Could not read QR code from image. Please try a clearer image.');
+          }
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      setErrorMessage('Failed to process QR code image');
+    }
   };
 
   const resetVerification = () => {
@@ -209,7 +313,7 @@ export default function VerifyPage() {
                           id="qr-upload"
                           onChange={(e) => {
                             if (e.target.files?.[0]) {
-                              setInputValue("QR_CODE_" + e.target.files[0].name);
+                              handleQRUpload(e.target.files[0]);
                             }
                           }}
                         />
@@ -239,6 +343,28 @@ export default function VerifyPage() {
                         }
                         className="mt-2"
                       />
+                    </div>
+                  )}
+
+                  {errorMessage && (
+                    <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                      <div className="flex items-start gap-3">
+                        <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-red-900 dark:text-red-100">
+                            Verification Error
+                          </p>
+                          <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                            {errorMessage}
+                          </p>
+                        </div>
+                        <button 
+                          onClick={resetError}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          <XCircle className="h-5 w-5" />
+                        </button>
+                      </div>
                     </div>
                   )}
 
