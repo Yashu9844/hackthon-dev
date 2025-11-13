@@ -9,7 +9,8 @@ import { RecentDocuments } from "@/components/dashboard/RecentDocuments";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileText, CheckCircle, Share2, Eye, Copy, QrCode, LogOut } from "lucide-react";
+import { DropdownMenu, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { FileText, CheckCircle, Share2, Eye, Copy, QrCode, LogOut, Briefcase, Heart, Plane, CarFront } from "lucide-react";
 import { Document, Activity } from "@repo/types";
 
 // Dummy data for development
@@ -155,6 +156,32 @@ export default function DashboardPage() {
                 <Button variant="ghost" onClick={() => router.push("/verify")}>
                   Verify
                 </Button>
+                <DropdownMenu trigger="Multi-Domain Verification">
+                  <DropdownMenuItem 
+                    icon={<Briefcase className="h-4 w-4" />}
+                    onClick={() => router.push("/verify/hr")}
+                  >
+                    HR Verify
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    icon={<Heart className="h-4 w-4" />}
+                    onClick={() => router.push("/verify/health")}
+                  >
+                    Health Vault
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    icon={<Plane className="h-4 w-4" />}
+                    onClick={() => router.push("/verify/travel")}
+                  >
+                    Travel ID
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    icon={<CarFront className="h-4 w-4" />}
+                    onClick={() => router.push("/verify/traffic")}
+                  >
+                    Traffic Verify
+                  </DropdownMenuItem>
+                </DropdownMenu>
                 <Button variant="ghost" onClick={() => router.push("/admin")}>
                   Admin
                 </Button>

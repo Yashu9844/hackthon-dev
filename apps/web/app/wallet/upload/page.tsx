@@ -1,7 +1,7 @@
 "use client";
 
 import { usePrivy } from "@privy-io/react-auth";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +13,10 @@ import {
   FileText,
   X,
   Loader2,
-  CheckCircle
+  CheckCircle,
+  ShieldCheck,
+  Mail,
+  Building2
 } from "lucide-react";
 import Link from "next/link";
 
@@ -22,6 +25,7 @@ type DocumentType = "academic" | "government" | "professional" | "other";
 export default function UploadDocumentPage() {
   const { ready, authenticated, user, logout } = usePrivy();
   const router = useRouter();
+  const searchParams = useSearchParams();
   
   const [file, setFile] = useState<File | null>(null);
   const [documentType, setDocumentType] = useState<DocumentType>("academic");
@@ -32,12 +36,36 @@ export default function UploadDocumentPage() {
   const [uploading, setUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const [sendVerificationRequest, setSendVerificationRequest] = useState(false);
+  const [issuerEmail, setIssuerEmail] = useState("");
+  const [issuerOrganization, setIssuerOrganization] = useState("");
 
   useEffect(() => {
     if (ready && !authenticated) {
       router.push("/login");
     }
   }, [ready, authenticated, router]);
+
+  // Prefill from query params when coming from domain-specific flows (travel, health, etc.)
+  useEffect(() => {
+    const typeParam = searchParams.get("type");
+    const nameParam = searchParams.get("name");
+    const issuerParam = searchParams.get("issuer");
+    const descriptionParam = searchParams.get("description");
+
+    if (typeParam === "academic" || typeParam === "government" || typeParam === "professional" || typeParam === "other") {
+      setDocumentType(typeParam as DocumentType);
+    }
+    if (nameParam) {
+      setDocumentName(nameParam);
+    }
+    if (issuerParam) {
+      setIssuerName(issuerParam);
+    }
+    if (descriptionParam) {
+      setDescription(descriptionParam);
+    }
+  }, [searchParams]);
 
   if (!ready || !authenticated || !user) {
     return (
@@ -271,16 +299,91 @@ export default function UploadDocumentPage() {
                 />
               </div>
 
-              {/* Issuer Name */}
-              <div>
-                <Label htmlFor="issuerName">Issuer Name (Optional)</Label>
-                <Input
-                  id="issuerName"
-                  value={issuerName}
-                  onChange={(e) => setIssuerName(e.target.value)}
-                  placeholder="e.g., MIT University"
-                  className="mt-2"
-                />
+              {/* Verification Request */}
+              <div className="border rounded-lg p-4 bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-blue-950/20 dark:to-purple-950/20 space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="mt-1">
+                    <input
+                      type="checkbox"
+                      id="sendVerification"
+                      checked={sendVerificationRequest}
+                      onChange={(e) => setSendVerificationRequest(e.target.checked)}
+                      className="h-5 w-5 rounded border-input text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="h-5 w-5 text-primary" />
+                      <Label htmlFor="sendVerification" className="cursor-pointer font-semibold text-base">
+                        Request Document Verification
+                      </Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Send this document to the issuing organization for official verification and authenticity confirmation.
+                    </p>
+                  </div>
+                </div>
+
+                {sendVerificationRequest && (
+                  <div className="space-y-4 pt-2 animate-in slide-in-from-top-2 duration-200">
+                    {/* Issuer Name */}
+                    <div>
+                      <Label htmlFor="issuerName" className="flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        Issuer Name *
+                      </Label>
+                      <Input
+                        id="issuerName"
+                        value={issuerName}
+                        onChange={(e) => setIssuerName(e.target.value)}
+                        placeholder="e.g., MIT Registrar Office"
+                        required={sendVerificationRequest}
+                        className="mt-2"
+                      />
+                    </div>
+
+                    {/* Issuer Organization */}
+                    <div>
+                      <Label htmlFor="issuerOrganization" className="flex items-center gap-2">
+                        <Building2 className="h-4 w-4" />
+                        Issuer Organization *
+                      </Label>
+                      <Input
+                        id="issuerOrganization"
+                        value={issuerOrganization}
+                        onChange={(e) => setIssuerOrganization(e.target.value)}
+                        placeholder="e.g., Massachusetts Institute of Technology"
+                        required={sendVerificationRequest}
+                        className="mt-2"
+                      />
+                    </div>
+
+                    {/* Issuer Email */}
+                    <div>
+                      <Label htmlFor="issuerEmail" className="flex items-center gap-2">
+                        <Mail className="h-4 w-4" />
+                        Issuer Email (Optional)
+                      </Label>
+                      <Input
+                        id="issuerEmail"
+                        type="email"
+                        value={issuerEmail}
+                        onChange={(e) => setIssuerEmail(e.target.value)}
+                        placeholder="e.g., registrar@mit.edu"
+                        className="mt-2"
+                      />
+                    </div>
+
+                    <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-md p-3">
+                      <p className="text-sm text-blue-900 dark:text-blue-100 flex items-start gap-2">
+                        <ShieldCheck className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                        <span>
+                          The organization will receive your verification request and can approve or reject it from their dashboard.
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Issue Date */}

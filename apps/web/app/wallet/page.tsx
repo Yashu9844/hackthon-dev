@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DropdownMenu, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { 
   GraduationCap, 
   FileText, 
@@ -15,7 +16,10 @@ import {
   CheckCircle,
   Clock,
   XCircle,
-  Filter
+  Filter,
+  Heart,
+  Plane,
+  CarFront
 } from "lucide-react";
 import Link from "next/link";
 import { Document } from "@repo/types";
@@ -163,6 +167,32 @@ export default function WalletPage() {
                 <Button variant="ghost" onClick={() => router.push("/verify")}>
                   Verify
                 </Button>
+                <DropdownMenu trigger="Multi-Domain Verification">
+                  <DropdownMenuItem 
+                    icon={<Briefcase className="h-4 w-4" />}
+                    onClick={() => router.push("/verify/hr")}
+                  >
+                    HR Verify
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    icon={<Heart className="h-4 w-4" />}
+                    onClick={() => router.push("/verify/health")}
+                  >
+                    Health Vault
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    icon={<Plane className="h-4 w-4" />}
+                    onClick={() => router.push("/verify/travel")}
+                  >
+                    Travel ID
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    icon={<CarFront className="h-4 w-4" />}
+                    onClick={() => router.push("/verify/traffic")}
+                  >
+                    Traffic Verify
+                  </DropdownMenuItem>
+                </DropdownMenu>
                 <Button variant="ghost" onClick={() => router.push("/admin")}>
                   Admin
                 </Button>
