@@ -174,6 +174,9 @@ export default function WalletPage() {
                 <Button variant="ghost" onClick={() => router.push("/user-verify")}>
                   Verify
                 </Button>
+                <Button variant="ghost" onClick={() => router.push("/admin")}>
+                  Admin
+                </Button>
               </div>
             </div>
             <div className="flex items-center gap-4">
