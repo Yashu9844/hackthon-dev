@@ -128,7 +128,7 @@ export async function POST(
     }
 
     // Generate share link
-    const shareLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/verify/${shareToken}`;
+    const shareLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/user-verify/${shareToken}`;
 
     return NextResponse.json(
       {

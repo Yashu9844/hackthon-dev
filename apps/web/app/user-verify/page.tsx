@@ -61,7 +61,7 @@ export default function VerifyPage() {
           const token = url.pathname.split('/').pop();
           if (token) {
             // Redirect to token verify page
-            window.location.href = `/verify/${token}`;
+            window.location.href = `/user-verify/${token}`;
             return;
           }
         } catch (urlError) {
@@ -151,11 +151,11 @@ export default function VerifyPage() {
             setInputValue(code.data);
             
             // Auto-submit if it's a share link
-            if (code.data.includes('/verify/')) {
+            if (code.data.includes('/user-verify/')) {
               const url = new URL(code.data);
               const token = url.pathname.split('/').pop();
               if (token) {
-                window.location.href = `/verify/${token}`;
+                window.location.href = `/user-verify/${token}`;
               }
             } else {
               setErrorMessage('QR code decoded, but content is not a valid share link');
